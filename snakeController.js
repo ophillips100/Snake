@@ -13,8 +13,9 @@ const tileSize = 20; // Size of each snake segment and apple
 let apple = {x: 200, y: 200}; // Initial apple position
 
 let score = 0;
-let gameOver = false;
-let gameInteraval = setInterval(gameLoop, 75);
+let highScore = localStorage.getItem('snakeHighScore') || 0;
+document.getElementById('highScore').textContent = highScore;
+let gameInterval = setInterval(gameLoop, 75);
 
 // Listen for keyboard presses
 document.addEventListener("keydown", changeDirection);
@@ -61,10 +62,13 @@ function generateApple() {
 generateApple(); // Generate the first apple
 
 function endGame() {
-  clearInterval(gameInteraval);
-  alert("Game Over! Your score: " + score);
+  clearInterval(gameInterval);
+  alert("Game Over!\nYour score: " + score + "\nHigh Score: " + highScore);
   document.location.reload();
-  gameOver = true;
+  if (score > highScore) {
+    highScore = score;
+    localStorage.setItem('snakeHighScore', highScore); // Save permanently
+  }
 }
 
 function gameLoop() {
