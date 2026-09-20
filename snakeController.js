@@ -2,33 +2,34 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 let snake = [
-  {x: 160, y: 160},
-  {x: 140, y: 160},
-  {x: 120, y: 120},
-
+  {x: 200, y: 200},
 ]
 // Velocity
 let dx = 0;
 let dy = 0;
+let newMovePossible = true; // Prevent multiple direction changes in one frame
 const tileSize = 20; // Size of each snake segment and apple
 
 let apple = {x: 200, y: 200}; // Initial apple position
 
 let score = 0;
-
-
+let gameOver = false;
+let gameInteraval = setInterval(gameLoop, 75);
 
 // Listen for keyboard presses
 document.addEventListener("keydown", changeDirection);
 
 function changeDirection(event) {
   const key_pressed = event.key;
+  if (!newMovePossible) return; // Ignore if a move has already been made in this frame
 
   // Prevent snake from reversing into itself
   const goingUp = dy === -tileSize;
   const goingDown = dy === tileSize;
   const goingRight = dx === tileSize;
   const goingLeft = dx === -tileSize;
+
+  
 
   if (key_pressed === "ArrowUp" && !goingDown) {
     dx = 0;
@@ -46,14 +47,25 @@ function changeDirection(event) {
     dx = tileSize;
     dy = 0;
   }
+  newMovePossible = false; // Mark that a move has been made in this frame
 }
 
 function generateApple() {
   apple.x = Math.floor(Math.random() * (canvas.width / tileSize)) * tileSize;
   apple.y = Math.floor(Math.random() * (canvas.height / tileSize)) * tileSize;
+  if (snake.some(segment => segment.x === apple.x && segment.y === apple.y)) {
+    generateApple(); // Regenerate if apple is on the snake
+  }
 }
 
 generateApple(); // Generate the first apple
+
+function endGame() {
+  clearInterval(gameInteraval);
+  alert("Game Over! Your score: " + score);
+  document.location.reload();
+  gameOver = true;
+}
 
 function gameLoop() {
   // Clear the canvas
@@ -61,11 +73,16 @@ function gameLoop() {
   // Create a new head based on the current direction
     const head = { x: snake[0].x + dx, y: snake[0].y + dy };
 
-    // Screen wrapping logic
-    if (head.x >= canvas.width) head.x = 0;
-    if (head.x < 0) head.x = canvas.width - tileSize;
-    if (head.y >= canvas.height) head.y = 0;
-    if (head.y < 0) head.y = canvas.height - tileSize;
+    for (let i = 1; i < snake.length; i++) {
+      if (head.x === snake[i].x && head.y === snake[i].y) {
+        endGame();
+        return;
+      }
+    }
+    if (head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height) {
+      endGame();
+      return;
+    }
 
     // Add head to front of array
     snake.unshift(head);
@@ -95,6 +112,6 @@ function gameLoop() {
         ctx.strokeRect(part.x, part.y, tileSize, tileSize);
     });
 
-}
+    newMovePossible = true; // Allow new direction change in the next frame
 
-setInterval(gameLoop, 75);
+}
